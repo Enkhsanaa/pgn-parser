@@ -25,7 +25,7 @@
     }
     function make_rav(moves, result) {
         return {
-            moves, 
+            moves,
             result
         };
     }
@@ -42,11 +42,11 @@
 
 start = gs:(game newline*)* EOF {return gs.map(function(g) { return g[0]})}
 
-game = 
-    h:headers? 
-    c:comment? 
-    whitespace* 
-    mr:(m:movetext whitespace+ r:result {return [m, r]} / r:result {return [null, r]}) 
+game =
+    h:headers?
+    c:comment?
+    whitespace*
+    mr:(m:movetext whitespace+ r:result {return [m, r]} / r:result {return [null, r]})
     whitespace* {return make_game(h, c, mr[0], mr[1])}
 
 EOF = !.
@@ -81,31 +81,33 @@ comment = "{" cc:comment_chars* "}" {return cc.join('');}
 
 pawn_half_move = (r:rank c:capture)? square promotion?
 piece_half_move = piece capture? square
-piece_disambiguation_half_move = piece (rank / file) capture? square
+piece_disambiguation_half_move_v1 = piece (rank / file) capture? square
+piece_disambiguation_half_move_v2 = piece rank  file capture? square
 castle_half_move = ("O-O-O" / "O-O")
 
-half_move = m:(continuation? 
-    (castle_half_move / 
-     piece_disambiguation_half_move / 
-     piece_half_move / 
-     pawn_half_move) 
-    (check / checkmate)? 
+half_move = m:(continuation?
+    (castle_half_move /
+     piece_disambiguation_half_move_v1 /
+     piece_disambiguation_half_move_v2 /
+     piece_half_move /
+     pawn_half_move)
+    (check / checkmate)?
     nag_alts?) {return flatten(m).join('');}
 
-move = mn:move_number? 
+move = mn:move_number?
        whitespace*
-       m:half_move 
+       m:half_move
        nags:(whitespace+ n:nag {return n})*
-       com:(whitespace+ c2:comment {return c2})? 
+       com:(whitespace+ c2:comment {return c2})?
        ravs:(whitespace+ r:rav {return r})*
        {return make_move(mn, m, nags, ravs, com)}
 
 movetext = first:move rest:(whitespace+ move)* {return first ? [first].concat(rest.map(function(m) {return m[1]})) : []}
 
-rav = "(" 
-    whitespace* 
-    m:movetext 
-    whitespace* 
+rav = "("
+    whitespace*
+    m:movetext
+    whitespace*
     r:result?
     whitespace*
     ")" {return make_rav(m, r)}
